@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>webview-test setup</title>
+<style>
+  :root {
+    color-scheme: light dark;
+    --bg: #f5f6f8; --card: #ffffff; --text: #1d2023; --muted: #6b7280;
+    --border: #dfe2e7; --accent: #2563eb; --accent-text: #ffffff; --error: #dc2626;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg: #15171a; --card: #1e2125; --text: #e7e9ec; --muted: #9aa1ab; --border: #33373d; --accent: #3b82f6; }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; font: 14px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, sans-serif; background: var(--bg); color: var(--text); }
+  main { max-width: 560px; margin: 48px auto; padding: 0 16px; }
+  h1 { font-size: 20px; margin: 0 0 4px; }
+  p.lead { color: var(--muted); margin: 0 0 24px; }
+  section { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 20px; margin-bottom: 16px; }
+  h2 { font-size: 15px; margin: 0 0 4px; }
+  section > p { color: var(--muted); margin: 0 0 16px; font-size: 13px; }
+  label { display: block; font-weight: 600; font-size: 13px; margin: 12px 0 4px; }
+  label span { font-weight: 400; color: var(--muted); }
+  input, select { width: 100%; padding: 9px 11px; border: 1px solid var(--border); border-radius: 8px; background: var(--bg); color: var(--text); font: inherit; }
+  input:focus, select:focus { outline: 2px solid var(--accent); outline-offset: -1px; }
+  .row { display: flex; gap: 12px; }
+  .row > div { flex: 1; }
+  button { margin-top: 16px; width: 100%; padding: 10px; border: 0; border-radius: 8px; background: var(--accent); color: var(--accent-text); font: inherit; font-weight: 600; cursor: pointer; }
+  button:disabled { opacity: 0.6; cursor: progress; }
+  .error { color: var(--error); margin-top: 12px; white-space: pre-wrap; font-size: 13px; }
+  .hint { color: var(--muted); font-size: 12px; text-align: center; margin-top: 8px; }
+</style>
+</head>
+<body>
+<main>
+  <h1>webview-test</h1>
+  <p class="lead">Opens the in-app order form the way a host application would. Settings, including the secret, are saved on this machine only.</p>
+
+  <section>
+    <h2>Request a session</h2>
+    <p>Copy these from the application's page under In-App Applications in the console.</p>
+    <form id="session-form">
+      <label for="endpoint">Session endpoint</label>
+      <input id="endpoint" name="endpoint" placeholder="https://your-site.example.com/embed/session" required>
+
+      <label for="app_id">Application ID</label>
+      <input id="app_id" name="app_id" placeholder="app_..." required>
+
+      <label for="secret">Secret</label>
+      <input id="secret" name="secret" type="password" required>
+
+      <label for="flow_id">Flow ID</label>
+      <input id="flow_id" name="flow_id" required>
+
+      <div class="row">
+        <div>
+          <label for="identity">Customer identity <span>(optional)</span></label>
+          <input id="identity" name="identity" placeholder="Leave empty for a new shopper">
+        </div>
+        <div>
+          <label for="device">Device</label>
+          <select id="device" name="device">
+            <option value="desktop">Desktop</option>
+            <option value="mobile">Mobile</option>
+          </select>
+        </div>
+      </div>
+
+      <button type="submit" id="session-submit">Open order form</button>
+      <div class="error" id="session-error" hidden></div>
+    </form>
+  </section>
+
+  <section>
+    <h2>Or open a URL</h2>
+    <p>An order form URL you already have, such as one returned by the session endpoint.</p>
+    <form id="url-form">
+      <label for="url">URL</label>
+      <input id="url" name="url" placeholder="https://your-site.example.com/embed/order?t=..." required>
+      <button type="submit">Open URL</button>
+    </form>
+  </section>
+
+  <p class="hint">Press F2 at any time to come back here.</p>
+</main>
+<script>
+  const saved = /*SETTINGS*/null;
+  const fields = ['endpoint', 'app_id', 'secret', 'flow_id', 'identity', 'device', 'url'];
+  if (saved) {
+    for (const f of fields) {
+      if (saved[f]) document.getElementById(f).value = saved[f];
+    }
+  }
+
+  const values = () => Object.fromEntries(fields.map(f => [f, document.getElementById(f).value.trim()]));
+  const submit = document.getElementById('session-submit');
+  const error = document.getElementById('session-error');
+
+  window.setupError = (message) => {
+    submit.disabled = false;
+    submit.textContent = 'Open order form';
+    error.textContent = message;
+    error.hidden = false;
+  };
+
+  document.getElementById('session-form').addEventListener('submit', (e) => {
+    e.preventDefault();
+    error.hidden = true;
+    submit.disabled = true;
+    submit.textContent = 'Requesting session…';
+    window.ipc.postMessage(JSON.stringify({type: 'setup:session', settings: values()}));
+  });
+
+  document.getElementById('url-form').addEventListener('submit', (e) => {
+    e.preventDefault();
+    window.ipc.postMessage(JSON.stringify({type: 'setup:url', settings: values()}));
+  });
+</script>
+</body>
+</html>
