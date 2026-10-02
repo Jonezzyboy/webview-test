@@ -71,7 +71,7 @@ fn main() -> wry::Result<()> {
     let proxy = event_loop.create_proxy();
     let ipc_proxy = proxy.clone();
 
-    let size = LogicalSize::new(1280.0, 860.0);
+    let size = LogicalSize::new(648.0, 552.0);
     let window = WindowBuilder::new()
         .with_title("webview-test")
         .with_inner_size(size)

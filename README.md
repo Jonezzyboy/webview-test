@@ -16,7 +16,7 @@ cargo run                    # opens the setup screen
 cargo run -- <order form url> # skips it and loads the URL
 ```
 
-The window is centred on the primary monitor at 1280x860.
+The window is centred on the primary monitor at 648x552.
 
 ## Setup screen
 
